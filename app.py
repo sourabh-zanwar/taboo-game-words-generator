@@ -22,6 +22,10 @@ def game_play(curr_word, action, completed_words):
 def complete_round(remaining_keys, completed_words):
     keys = remaining_keys + completed_words["skip"]
     keys = list(set(keys))
+    # Reset the completed_words dictionary
+    completed_words["skip"] = []
+    completed_words["correct"] = []
+    completed_words["incorrect"] = []
     return keys, completed_words
 
 
@@ -33,14 +37,6 @@ random.shuffle(keys)
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  # Needed for session management
-
-
-# Sample dictionary with several entries
-word_dict = {
-    "Amazon": ["Jeff Bezos", "Prime Video", "books", "online shop", "shopping"],
-    "Google": ["Larry Page", "Search Engine", "Android", "Google Cloud", "YouTube"],
-    "Tesla": ["Elon Musk", "Electric Cars", "SpaceX", "Solar Energy", "Model S"],
-}
 
 
 def update_keys(keys):
@@ -69,7 +65,11 @@ def update_word_list(curr_word, action):
 def home():
     # Retrieve the action stored in the session (if any)
     action = session.get("action", "None")
-
+    score = {
+        "correct": len(completed_words["correct"]),
+        "incorrect": len(completed_words["incorrect"]),
+        "skip": len(completed_words["skip"]),
+    }
     key, values = get_item()
 
     return render_template_string(
@@ -163,9 +163,17 @@ def home():
                 font-size: x-large;
                 margin-top: 10px;
             }
+            .score {
+                margin-bottom: 20px;
+                font-size: x-large;
+                font-weight: bold;
+            }
         </style>
     </head>
     <body>
+        <div class="score">
+            &#9989; {{ score['correct'] }} | &#10060; {{ score['incorrect'] }} | &#9193; {{ score['skip'] }}
+        </div>
         <div class="boxx">
         <div class="key">{{ key }}</div>
         {% for value in values %}
@@ -183,6 +191,7 @@ def home():
     </body>
     </html>
     """,
+        score=score,
         key=key,
         values=values,
         action=action,
@@ -201,6 +210,12 @@ def action(action):
         print("Round completed, updated keys:", keys)
     else:
         update_word_list(keys[i - 1], action)
+
+    score = {
+        "correct": len(completed_words["correct"]),
+        "incorrect": len(completed_words["incorrect"]),
+        "skip": len(completed_words["skip"]),
+    }
 
     # Get a new random dictionary item after the button click
     key, values = get_item()
@@ -297,9 +312,17 @@ def action(action):
                 font-size: x-large;
                 margin-top: 10px;
             }
+            .score {
+                margin-bottom: 20px;
+                font-size: x-large;
+                font-weight: bold;
+            }
         </style>
     </head>
     <body>
+        <div class="score">
+            &#9989; {{ score['correct'] }} | &#10060; {{ score['incorrect'] }} | &#9193; {{ score['skip'] }}
+        </div>
         <div class="boxx">
         <div class="key">{{ key }}</div>
         {% for value in values %}
@@ -317,6 +340,7 @@ def action(action):
     </body>
     </html>
     """,
+        score=score,
         key=key,
         values=values,
         action=action,
